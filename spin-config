@@ -1,0 +1,37 @@
+gcs:
+  enabled: true
+  bucket: spin1095gcp
+  project: my-first-project
+  jsonKey: <--jsonkey-->
+
+dockerRegistries:
+- name: gcr
+  address: https://gcr.io
+  username: <--spin1095sa-->
+  password: <--jsonkey-->
+  email: 1234@5678.com
+
+# Configure Spinnaker to enable GCP services
+halyard:
+  additionalScripts:
+    create: true
+    data:
+      enable_gcs_artifacts.sh: |-
+        \$HAL_COMMAND config artifact gcs account add gcs-$PROJECT --json-path /opt/gcs/key.json
+        \$HAL_COMMAND config artifact gcs enable
+      enable_pubsub_triggers.sh: |-
+        \$HAL_COMMAND config pubsub google enable
+        \$HAL_COMMAND config pubsub google subscription add gcr-triggers \
+          --subscription-name gcr-triggers \
+          --json-path /opt/gcs/key.json \
+          --project $PROJECT \
+          --message-format GCR
+      enable kayenta.sh |-
+        \$HAL_COMMAND config canary enable
+        \$HAL_COMMAND config canary google enable
+        \$HAL_COMMAND config canary google account add my-google-account \
+           --project $PROJECT_ID \
+           --json-path $JSON_PATH \
+           --bucket $MY_SPINNAKER_BUCKET
+         \$HAL_COMMAND config canary google edit --gcs-enabled true \
+  -        --stackdriver-enabled true
